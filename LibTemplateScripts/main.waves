@@ -1,0 +1,12 @@
+public func Print(String msg)
+{
+    extern("Print", msg);
+}
+
+/*
+To make library calls or just so/dll/dylib file calls you need to 
+type extern.
+
+To compile the c++ code you need to type 'wave lib build ' then your library name.
+BUT if you are using an extern header like opengl or glm. You need to compile
+it at your own.*/
