@@ -1,0 +1,4 @@
+public static func Print()
+{
+    println("ITS WORKING!");
+}
