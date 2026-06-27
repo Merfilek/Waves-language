@@ -1,0 +1,1 @@
+In this repository right here its the Main official waves repository, Right here we have all the libraries the user can get from the trusted package manager and in the releases you have all the programs.
