@@ -1,0 +1,19 @@
+import Color;
+
+public static Class Terminal
+{
+    public static func SetColor(Color color)
+    {
+        extern("Color", color.R, color.G, color.B);
+    }
+
+    public static func SetBackgroundColor(Color color)
+    {
+        extern("BackgroundColor", color.R, color.G, color.B);
+    }
+
+    public static func ResetColor()
+    {
+        extern("ResetColor");
+    }
+}

@@ -1,0 +1,94 @@
+// Collections standard library for Waves
+// Backed by C++ STL containers — zero overhead on the Waves side.
+// Each class stores a native heap pointer in `__handle` (a long).
+// The C++ bridge casts it back to the right struct on every call.
+
+// ── Iterable protocol ─────────────────────────────────────────────────────────
+// Any class that extends Iterable<T> and implements count() + get(int)
+// automatically works with foreach loops. The compiler walks the inheritance
+// chain looking for "Iterable" — no hardcoded class name checks anywhere else.
+public Class Iterable<T>
+{
+    int count()    { return 0; }
+    T   get(int i) { return null; }
+}
+
+public Class List<T> extends Iterable<T>
+{
+    long __handle;
+
+    List() {
+        that.__handle = extern("ListCreate");
+    }
+
+    func add(T item)                { extern("ListAdd",     that.__handle, item); }
+    func insert(int index, T item)  { extern("ListInsert",  that.__handle, index, item); }
+    func set(int index, T value)    { extern("ListSet",     that.__handle, index, value); }
+    func remove(int index)          { extern("ListRemove",  that.__handle, index); }
+    func clear()                    { extern("ListClear",   that.__handle); }
+    func destroy()                  { extern("ListDestroy", that.__handle); }
+
+    T    get(int index)   { return extern("ListGet",      that.__handle, index); }
+    int  count()          { return extern("ListCount",    that.__handle); }
+    bool contains(T item) { return extern("ListContains", that.__handle, item); }
+    int  indexOf(T item)  { return extern("ListIndexOf",  that.__handle, item); }
+    bool isEmpty()        { return that.count() == 0; }
+}
+
+public Class Dictionary<K, V>
+{
+    long __handle;
+
+    Dictionary() {
+        that.__handle = extern("DictCreate");
+    }
+
+    func set(K key, V value)  { extern("DictSet",     that.__handle, key, value); }
+    func remove(K key)        { extern("DictRemove",  that.__handle, key); }
+    func clear()              { extern("DictClear",   that.__handle); }
+    func destroy()            { extern("DictDestroy", that.__handle); }
+
+    V    get(K key)     { return extern("DictGet",   that.__handle, key); }
+    bool has(K key)     { return extern("DictHas",   that.__handle, key); }
+    int  count()        { return extern("DictCount", that.__handle); }
+    bool isEmpty()      { return that.count() == 0; }
+    auto keys()         { return extern("DictKeys",  that.__handle); }
+    auto values()       { return extern("DictValues",that.__handle); }
+}
+
+public Class Stack<T>
+{
+    long __handle;
+
+    Stack() {
+        that.__handle = extern("StackCreate");
+    }
+
+    func push(T item) { extern("StackPush",    that.__handle, item); }
+    func clear()      { extern("StackClear",   that.__handle); }
+    func destroy()    { extern("StackDestroy", that.__handle); }
+
+    T    pop()      { return extern("StackPop",     that.__handle); }
+    T    peek()     { return extern("StackPeek",    that.__handle); }
+    int  count()    { return extern("StackCount",   that.__handle); }
+    bool isEmpty()  { return extern("StackIsEmpty", that.__handle); }
+}
+
+public Class Set<T>
+{
+    long __handle;
+
+    Set() {
+        that.__handle = extern("SetCreate");
+    }
+
+    func add(T item)     { extern("SetAdd",     that.__handle, item); }
+    func remove(T item)  { extern("SetRemove",  that.__handle, item); }
+    func clear()         { extern("SetClear",   that.__handle); }
+    func destroy()       { extern("SetDestroy", that.__handle); }
+
+    bool contains(T item) { return extern("SetContains", that.__handle, item); }
+    int  count()          { return extern("SetCount",    that.__handle); }
+    bool isEmpty()        { return that.count() == 0; }
+    auto toArray()        { return extern("SetToArray",  that.__handle); }
+}

@@ -1,0 +1,35 @@
+public Class File
+{
+    // ── Instance state ────────────────────────────────────────────────────────
+    public string path;
+
+    File(string p) {
+        that.path = p;
+    }
+
+    // ── Instance methods ──────────────────────────────────────────────────────
+    public string read()               => File.readText(that.path);
+    public bool   write(string text)   => File.writeText(that.path, text);
+    public bool   append(string text)  => File.appendText(that.path, text);
+    public bool   exists()             => File.exists(that.path);
+    public bool   delete()             => File.delete(that.path);
+    public int    size()               => File.size(that.path);
+    public string[] lines()            => File.readLines(that.path);
+
+    // ── Static quick-access ───────────────────────────────────────────────────
+    public static string   readText(string path)                   { return extern("FileRead", path); }
+    public static bool     writeText(string path, string text)     { return extern("FileWrite", path, text); }
+    public static bool     appendText(string path, string text)    { return extern("FileAppend", path, text); }
+    public static bool     exists(string path)                     { return extern("FileExists", path); }
+    public static bool     delete(string path)                     { return extern("FileDelete", path); }
+    public static int      size(string path)                       { return extern("FileSize", path); }
+    public static string[] readLines(string path)                  { return extern("FileReadLines", path); }
+
+    // ── Path utilities ────────────────────────────────────────────────────────
+    public static string dirname(string path)                      { return extern("PathDirname", path); }
+    public static string basename(string path)                     { return extern("PathBasename", path); }
+    public static string extension(string path)                    { return extern("PathExtension", path); }
+    public static string noExtension(string path)                  { return extern("PathNoExtension", path); }
+    public static string changeExtension(string path, string ext)  { return extern("PathChangeExt", path, ext); }
+    public static string join(string a, string b)                  { return extern("PathJoin", a, b); }
+}

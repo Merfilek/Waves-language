@@ -1,0 +1,4 @@
+public func wait(double seconds)
+{
+    extern("Wait", seconds);
+}

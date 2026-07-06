@@ -1,0 +1,15 @@
+public enum InputType
+{
+    Normal,
+    Hidden,
+    Password
+}
+
+public string input(#InputType inputType)
+{
+    if(!inputType.IsInputted()) inputType = InputType.Normal;
+    
+    if(inputType == InputType.Hidden) return extern("Hidden_Input");
+    elif(inputType == InputType.Password) return extern ("Password_Input");
+    return extern("Input");
+}

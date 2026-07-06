@@ -1,0 +1,10 @@
+Time
+{
+    version = 0.1
+    wavesVersion >= 0.0.1
+    author = Merfilek
+
+    dependencies {
+
+    }
+}

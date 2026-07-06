@@ -1,0 +1,428 @@
+// Vouncy.waves — GUI library for Waves.
+// Backed by the wavegui_native C++ core (SDL2 + Blend2D) — zero overhead
+// on the Waves side. Each class stores a native heap pointer in
+// `__handle` (a long); the C++ bridge (VouncyBridge.cpp) casts it back
+// to the right type on every call, same pattern as the Collections lib.
+
+// ── Color ──────────────────────────────────────────────────────────────
+// Packed 0xAARRGGBB, matching the native side exactly.
+public Class Color
+{
+    static long Rgb(int r, int g, int b) { return Argb(255, r, g, b); }
+
+    static long Argb(int a, int r, int g, int b)
+    {
+        return ((long)(a & 255) << 24) | ((long)(r & 255) << 16) | ((long)(g & 255) << 8) | (long)(b & 255);
+    }
+
+    // A small default palette so components look decent out of the box.
+    static long Background   = Rgb(30, 30, 36);
+    static long Surface      = Rgb(42, 42, 51);
+    static long Accent       = Rgb(108, 92, 231);
+    static long AccentHover  = Rgb(124, 108, 247);
+    static long AccentPress  = Rgb(88, 73, 190);
+    static long TextPrimary  = Rgb(240, 240, 245);
+    static long TextMuted    = Rgb(160, 160, 172);
+    static long Border       = Argb(50, 255, 255, 255);
+    static long Shadow       = Argb(90, 0, 0, 0);
+}
+
+// ── EventType ──────────────────────────────────────────────────────────
+// Mirrors WaveGUI_EventType in wavegui.h exactly.
+public Class EventType
+{
+    static int None          = 0;
+    static int Quit          = 1;
+    static int WindowClose   = 2;
+    static int WindowResize  = 3;
+    static int MouseMove     = 4;
+    static int MouseDown     = 5;
+    static int MouseUp       = 6;
+    static int MouseWheel    = 7;
+    static int KeyDown       = 8;
+    static int KeyUp         = 9;
+    static int TextInput     = 10;
+}
+
+// ── Easing ─────────────────────────────────────────────────────────────
+// Mirrors WaveGUI_Easing exactly.
+public Class Easing
+{
+    static int Linear      = 0;
+    static int OutCubic    = 1;  // default for most transitions
+    static int InCubic     = 2;
+    static int InOutCubic  = 3;
+    static int OutBack     = 4;  // slight single overshoot
+    static int OutBounce   = 5;  // multiple decreasing bounces
+    static int OutElastic  = 6;  // oscillating decaying overshoot
+}
+
+// ── Cursor ─────────────────────────────────────────────────────────────
+public Class Cursor
+{
+    static int Arrow       = 0;
+    static int Pointer     = 1;
+    static int Text        = 2;
+    static int ResizeH     = 3;
+    static int ResizeV     = 4;
+    static int NotAllowed  = 5;
+
+    static func Set(int shape) { extern("GUI_SetCursor", shape); }
+}
+
+// ── LayoutDirection / MainAlign / CrossAlign ────────────────────────────
+public Class LayoutDirection
+{
+    static int Row    = 0;
+    static int Column = 1;
+}
+public Class MainAlign
+{
+    static int Start        = 0;
+    static int Center       = 1;
+    static int End          = 2;
+    static int SpaceBetween = 3;
+    static int SpaceAround  = 4;
+}
+public Class CrossAlign
+{
+    static int Start   = 0;
+    static int Center  = 1;
+    static int End     = 2;
+    static int Stretch = 3;
+}
+
+// ── GUIEvent ───────────────────────────────────────────────────────────
+// Field shape must match what waves_GUI_PollEvent populates on the
+// native side (VouncyBridge.cpp), via waves_object_create("GUIEvent").
+public Class GUIEvent
+{
+    int    type;
+    long   window;
+    float  mouseX;
+    float  mouseY;
+    int    mouseButton;
+    float  wheelDeltaY;
+    int    keyCode;
+    int    modifiers;
+    string text;
+    int    width;
+    int    height;
+}
+
+// ── Hit testing ────────────────────────────────────────────────────────
+public Class Hit
+{
+    static bool PointInRect(float px, float py, float x, float y, float w, float h)
+    {
+        return extern("GUI_PointInRect", px, py, x, y, w, h);
+    }
+}
+
+// ── Font ───────────────────────────────────────────────────────────────
+public Class Font
+{
+    long __handle;
+
+    Font(string path, float pixelSize) { that.__handle = extern("GUI_LoadFont", path, pixelSize); }
+
+    float measureWidth(string text)         { return extern("GUI_MeasureTextWidth", that.__handle, text); }
+    float measureHeight(string text)        { return extern("GUI_MeasureTextHeight", that.__handle, text); }
+    float measureWrappedWidth(string text, float maxWidth)  { return extern("GUI_MeasureTextWrappedWidth", that.__handle, text, maxWidth); }
+    float measureWrappedHeight(string text, float maxWidth) { return extern("GUI_MeasureTextWrappedHeight", that.__handle, text, maxWidth); }
+    int   indexAtX(string text, float x)    { return extern("GUI_TextIndexAtX", that.__handle, text, x); }
+
+    func destroy() { extern("GUI_DestroyFont", that.__handle); }
+}
+
+// ── Image ──────────────────────────────────────────────────────────────
+public Class Image
+{
+    long __handle;
+
+    Image(string path) { that.__handle = extern("GUI_LoadImage", path); }
+
+    int width()  { return extern("GUI_GetImageWidth", that.__handle); }
+    int height() { return extern("GUI_GetImageHeight", that.__handle); }
+
+    func destroy() { extern("GUI_DestroyImage", that.__handle); }
+}
+
+// ── Tween ──────────────────────────────────────────────────────────────
+// Fixed-duration eased animation. Use Spring instead for anything that
+// should feel physically alive (dragging, following the mouse).
+public Class Tween
+{
+    long __handle;
+
+    Tween(float from, float to, float durationMs, int easing)
+    {
+        that.__handle = extern("GUI_CreateTween", from, to, durationMs, easing);
+    }
+
+    func update(float deltaMs) { extern("GUI_TweenUpdate", that.__handle, deltaMs); }
+
+    // Redirects toward a new target from the tween's CURRENT value —
+    // use this for state changes (hover on/off) instead of creating a
+    // new Tween each time. durationMs <= 0 keeps the existing duration.
+    func setTarget(float newTarget, float durationMs) { extern("GUI_TweenSetTarget", that.__handle, newTarget, durationMs); }
+
+    float value()  { return extern("GUI_TweenGetValue", that.__handle); }
+    bool  isDone() { return extern("GUI_TweenIsDone", that.__handle); }
+
+    func destroy() { extern("GUI_DestroyTween", that.__handle); }
+}
+
+// ── ColorTween ─────────────────────────────────────────────────────────
+// Convenience wrapper: animates a 0..1 progress Tween under the hood and
+// exposes the interpolated color directly.
+public Class ColorTween
+{
+    Tween _progress;
+    long  _colorFrom;
+    long  _colorTo;
+
+    ColorTween(long colorFrom, long colorTo, float durationMs, int easing)
+    {
+        that._colorFrom = colorFrom;
+        that._colorTo = colorTo;
+        that._progress = new Tween(0, 1, durationMs, easing);
+    }
+
+    func update(float deltaMs) { that._progress.update(deltaMs); }
+
+    func setTarget(long newColor, float durationMs)
+    {
+        if (that._colorTo == newColor) return; // already heading there
+        that._colorFrom = that.value();
+        that._colorTo = newColor;
+        that._progress.destroy();
+        that._progress = new Tween(0, 1, durationMs, Easing.OutCubic);
+    }
+
+    long value()  { return extern("GUI_LerpColorARGB", that._colorFrom, that._colorTo, that._progress.value()); }
+    bool isDone() { return that._progress.isDone(); }
+
+    func destroy() { that._progress.destroy(); }
+}
+
+// ── Spring ─────────────────────────────────────────────────────────────
+// A real damped-harmonic-oscillator simulation — no fixed duration, it
+// settles whenever the physics says it settles. Retargeting is just
+// "change what it's pulling toward"; use setValue() for drag interactions
+// (direct 1:1 control, e.g. following the mouse while dragging).
+//
+// Typical starting points: stiffness 170, damping 26, mass 1.
+public Class Spring
+{
+    long __handle;
+
+    Spring(float initialValue, float stiffness, float damping, float mass)
+    {
+        that.__handle = extern("GUI_CreateSpring", initialValue, stiffness, damping, mass);
+    }
+
+    func setTarget(float target)     { extern("GUI_SpringSetTarget", that.__handle, target); }
+    func setValue(float value)       { extern("GUI_SpringSetValue", that.__handle, value); }
+    func update(float deltaMs)       { extern("GUI_SpringUpdate", that.__handle, deltaMs); }
+
+    float value()     { return extern("GUI_SpringGetValue", that.__handle); }
+    bool  isSettled()  { return extern("GUI_SpringIsSettled", that.__handle); }
+
+    func destroy() { extern("GUI_DestroySpring", that.__handle); }
+}
+
+// ── Layout ─────────────────────────────────────────────────────────────
+// Small flexbox-style engine: Row/Column containers, fixed sizes,
+// flex-grow, padding, gap, alignment. Build the tree once, call compute()
+// on resize, read back each node's rect.
+public Class Layout
+{
+    long __handle;
+
+    Layout(int direction) { that.__handle = extern("GUI_CreateLayoutNode", direction); }
+
+    func addChild(Layout child)                    { extern("GUI_LayoutAddChild", that.__handle, child.__handle); }
+    func setFixedSize(float width, float height)    { extern("GUI_LayoutSetFixedSize", that.__handle, width, height); }
+    func setFlexGrow(float grow)                    { extern("GUI_LayoutSetFlexGrow", that.__handle, grow); }
+    func setPadding(float top, float right, float bottom, float left) { extern("GUI_LayoutSetPadding", that.__handle, top, right, bottom, left); }
+    func setGap(float gap)                          { extern("GUI_LayoutSetGap", that.__handle, gap); }
+    func setAlign(int mainAlign, int crossAlign)    { extern("GUI_LayoutSetAlign", that.__handle, mainAlign, crossAlign); }
+    func compute(float availableWidth, float availableHeight) { extern("GUI_LayoutCompute", that.__handle, availableWidth, availableHeight); }
+
+    float x()      { return extern("GUI_LayoutGetX", that.__handle); }
+    float y()      { return extern("GUI_LayoutGetY", that.__handle); }
+    float width()  { return extern("GUI_LayoutGetWidth", that.__handle); }
+    float height() { return extern("GUI_LayoutGetHeight", that.__handle); }
+
+    func destroy() { extern("GUI_DestroyLayoutNode", that.__handle); } // destroys children too
+}
+
+// ── Window ─────────────────────────────────────────────────────────────
+public Class Window
+{
+    long __handle;
+
+    static bool Init()     { return extern("GUI_Init"); }
+    static func Shutdown() { extern("GUI_Shutdown"); }
+    static GUIEvent PollEvent() { return extern("GUI_PollEvent"); } // null when the queue is empty
+
+    Window(string title, int width, int height)
+    {
+        that.__handle = extern("GUI_CreateWindow", title, width, height, true);
+    }
+
+    int   width()  { return extern("GUI_GetWindowWidth", that.__handle); }
+    int   height() { return extern("GUI_GetWindowHeight", that.__handle); }
+    float dpiScale() { return extern("GUI_GetWindowDpiScale", that.__handle); }
+    float mouseX() { return extern("GUI_GetMouseX", that.__handle); }
+    float mouseY() { return extern("GUI_GetMouseY", that.__handle); }
+
+    func setTitle(string title)           { extern("GUI_SetWindowTitle", that.__handle, title); }
+    func setSize(int width, int height)   { extern("GUI_SetWindowSize", that.__handle, width, height); }
+    func destroy()                        { extern("GUI_DestroyWindow", that.__handle); }
+
+    // ── Frame ──
+    func beginFrame(long clearColor) { extern("GUI_BeginFrame", that.__handle, clearColor); }
+    func endFrame()                  { extern("GUI_EndFrame", that.__handle); }
+
+    // ── Drawing ──
+    func fillRect(float x, float y, float w, float h, long color) { extern("GUI_FillRect", that.__handle, x, y, w, h, color); }
+
+    func fillRoundRect(float x, float y, float w, float h, float radius, long color)
+    { extern("GUI_FillRoundRect", that.__handle, x, y, w, h, radius, color); }
+
+    func strokeRoundRect(float x, float y, float w, float h, float radius, float strokeWidth, long color)
+    { extern("GUI_StrokeRoundRect", that.__handle, x, y, w, h, radius, strokeWidth, color); }
+
+    func drawBoxShadow(float x, float y, float w, float h, float radius, float blurRadius, float offsetY, long color)
+    { extern("GUI_DrawBoxShadow", that.__handle, x, y, w, h, radius, blurRadius, offsetY, color); }
+
+    func fillRoundRectGradientV(float x, float y, float w, float h, float radius, long colorTop, long colorBottom)
+    { extern("GUI_FillRoundRectGradientV", that.__handle, x, y, w, h, radius, colorTop, colorBottom); }
+
+    func fillCircle(float cx, float cy, float r, long color) { extern("GUI_FillCircle", that.__handle, cx, cy, r, color); }
+
+    func drawLine(float x0, float y0, float x1, float y1, float strokeWidth, long color)
+    { extern("GUI_DrawLine", that.__handle, x0, y0, x1, y1, strokeWidth, color); }
+
+    func strokeRect(float x, float y, float w, float h, float strokeWidth, long color)
+    { extern("GUI_StrokeRect", that.__handle, x, y, w, h, strokeWidth, color); }
+
+    func fillTriangle(float x0, float y0, float x1, float y1, float x2, float y2, long color)
+    { extern("GUI_FillTriangle", that.__handle, x0, y0, x1, y1, x2, y2, color); }
+
+    // NOTE: xs/ys must be Waves' built-in array type (whatever literal
+    // syntax that is in your language — the args* variadic pattern from
+    // your own examples produces one of these). This is NOT the
+    // Collections library's List<T> — the bridge reads these with the
+    // VM-native waves_array_get/waves_array_length primitives from
+    // WavesBridge.h, not List<T>'s internal WavesList handle, since those
+    // are two unrelated container implementations. If your array literal
+    // syntax differs from what I'm assuming, this is the one place that
+    // needs adjusting — everything else here doesn't touch arrays at all.
+    func fillPolygon(float[] xs, float[] ys, long color)
+    { extern("GUI_FillPolygon", that.__handle, xs, ys, color); }
+
+    func fillRoundRectGradientH(float x, float y, float w, float h, float radius, long colorLeft, long colorRight)
+    { extern("GUI_FillRoundRectGradientH", that.__handle, x, y, w, h, radius, colorLeft, colorRight); }
+
+    func fillRadialGradient(float cx, float cy, float radius, long colorCenter, long colorEdge)
+    { extern("GUI_FillRadialGradient", that.__handle, cx, cy, radius, colorCenter, colorEdge); }
+
+    func setMinSize(int minWidth, int minHeight) { extern("GUI_SetWindowMinSize", that.__handle, minWidth, minHeight); }
+    func setMaxSize(int maxWidth, int maxHeight) { extern("GUI_SetWindowMaxSize", that.__handle, maxWidth, maxHeight); }
+    func setIcon(Image icon)                     { extern("GUI_SetWindowIcon", that.__handle, icon.__handle); }
+    func setFullscreen(bool fullscreen)          { extern("GUI_SetWindowFullscreen", that.__handle, fullscreen); }
+    func setAlwaysOnTop(bool alwaysOnTop)        { extern("GUI_SetWindowAlwaysOnTop", that.__handle, alwaysOnTop); }
+    func centerOnScreen()                        { extern("GUI_CenterWindowOnScreen", that.__handle); }
+
+    func pushClipRect(float x, float y, float w, float h) { extern("GUI_PushClipRect", that.__handle, x, y, w, h); }
+    func popClip()                                        { extern("GUI_PopClip", that.__handle); }
+
+    func pushTranslate(float dx, float dy) { extern("GUI_PushTranslate", that.__handle, dx, dy); }
+    func popTransform()                    { extern("GUI_PopTransform", that.__handle); }
+
+    func drawText(Font font, string text, float x, float y, long color)
+    { extern("GUI_DrawText", that.__handle, font.__handle, text, x, y, color); }
+
+    func drawTextWrapped(Font font, string text, float x, float y, float maxWidth, float lineHeight, long color)
+    { extern("GUI_DrawTextWrapped", that.__handle, font.__handle, text, x, y, maxWidth, lineHeight, color); }
+
+    func drawImage(Image img, float x, float y, float w, float h)
+    { extern("GUI_DrawImage", that.__handle, img.__handle, x, y, w, h); }
+
+    bool saveSnapshotPNG(string path) { return extern("GUI_SaveSnapshotPNG", that.__handle, path); }
+}
+
+// ── Curve ──────────────────────────────────────────────────────────────
+// A Tween is fixed A-to-B. A Curve is the general case: however many
+// (time, value, easing) keyframes you want, at whatever spacing. Build
+// one, evaluate() it each frame with your elapsed time, and — since
+// keyframes are just numbers — a visual curve editor can export a list
+// of addKeyframe() calls (or any equivalent data format you parse) to
+// recreate the exact same curve elsewhere.
+public Class Curve
+{
+    long __handle;
+
+    Curve() { that.__handle = extern("GUI_CreateCurve"); }
+
+    func addKeyframe(float time, float value, int easingToNext) { extern("GUI_CurveAddKeyframe", that.__handle, time, value, easingToNext); }
+    func clear()                                                { extern("GUI_CurveClear", that.__handle); }
+
+    float evaluate(float time) { return extern("GUI_CurveEvaluate", that.__handle, time); }
+
+    int   keyframeCount()             { return extern("GUI_CurveKeyframeCount", that.__handle); }
+    float keyframeTime(int index)     { return extern("GUI_CurveGetKeyframeTime", that.__handle, index); }
+    float keyframeValue(int index)    { return extern("GUI_CurveGetKeyframeValue", that.__handle, index); }
+    int   keyframeEasing(int index)   { return extern("GUI_CurveGetKeyframeEasing", that.__handle, index); }
+
+    func destroy() { extern("GUI_DestroyCurve", that.__handle); }
+}
+
+// ── Dialogs ────────────────────────────────────────────────────────────
+public Class MessageBoxType
+{
+    static int Info    = 0;
+    static int Warning = 1;
+    static int Error   = 2;
+}
+
+public Class Dialog
+{
+    static func ShowMessage(Window win, int type, string title, string message)
+    { extern("GUI_ShowMessageBox", win.__handle, type, title, message); }
+
+    // Returns 0 for button0, 1 for button1.
+    static int Confirm(Window win, string title, string message, string button0Text, string button1Text)
+    { return extern("GUI_ShowConfirmDialog", win.__handle, title, message, button0Text, button1Text); }
+
+    // File/folder pickers — Linux only right now (kdialog/zenity).
+    // Returns an empty string if the user cancelled or no dialog tool
+    // was found.
+    static string OpenFile(string title)   { return extern("GUI_ShowOpenFileDialog", title); }
+    static string SaveFile(string title)   { return extern("GUI_ShowSaveFileDialog", title); }
+    static string OpenFolder(string title) { return extern("GUI_ShowOpenFolderDialog", title); }
+}
+
+// ── Clipboard ──────────────────────────────────────────────────────────
+public Class Clipboard
+{
+    static func SetText(string text) { extern("GUI_SetClipboardText", text); }
+    static string GetText()          { return extern("GUI_GetClipboardText"); }
+}
+
+// ── Display ────────────────────────────────────────────────────────────
+public Class Display
+{
+    static int Width()  { return extern("GUI_GetDisplayWidth"); }
+    static int Height() { return extern("GUI_GetDisplayHeight"); }
+}
+
+// ── Time ───────────────────────────────────────────────────────────────
+public Class GUITime
+{
+    static long NowMs() { return extern("GUI_GetTicksMs"); }
+    static func FrameDelay(int targetFps, long frameStartMs) { extern("GUI_FrameDelay", targetFps, frameStartMs); }
+}

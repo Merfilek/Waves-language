@@ -1,0 +1,50 @@
+public static Class Color
+{
+    public byte R;
+    public byte G;
+    public byte B;
+    public byte A;
+
+    public Color(byte R, byte G, byte B, byte A)
+    {
+        that.R = R;
+        that.G = G;
+        that.B = B;
+        that.A = A;
+    }
+
+    public static Color Black   = new Color(0, 0, 0, 255);
+    public static Color White   = new Color(255, 255, 255, 255);
+    public static Color Gray    = new Color(128, 128, 128, 255);
+
+    public static Color Red     = new Color(255, 0, 0, 255);
+    public static Color Green   = new Color(0, 255, 0, 255);
+    public static Color Blue    = new Color(0, 0, 255, 255);
+
+    public static Color Yellow  = new Color(255, 255, 0, 255);
+    public static Color Cyan    = new Color(0, 255, 255, 255);
+    public static Color Magenta = new Color(255, 0, 255, 255);
+
+    public static Color Orange  = new Color(255, 165, 0, 255);
+    public static Color Pink    = new Color(255, 105, 180, 255);
+    public static Color Purple  = new Color(128, 0, 128, 255);
+    public static Color Brown   = new Color(139, 69, 19, 255);
+
+    public static Color DarkRed   = new Color(139, 0, 0, 255);
+    public static Color DarkGreen = new Color(0, 100, 0, 255);
+    public static Color DarkBlue  = new Color(0, 0, 139, 255);
+
+    public static Color LightRed   = new Color(255, 102, 102, 255);
+    public static Color LightGreen = new Color(144, 238, 144, 255);
+    public static Color LightBlue  = new Color(173, 216, 230, 255);
+
+    public static Color Gray10 = new Color(25, 25, 25, 255);
+    public static Color Gray20 = new Color(51, 51, 51, 255);
+    public static Color Gray30 = new Color(77, 77, 77, 255);
+    public static Color Gray40 = new Color(102, 102, 102, 255);
+    public static Color Gray50 = new Color(128, 128, 128, 255);
+    public static Color Gray60 = new Color(153, 153, 153, 255);
+    public static Color Gray70 = new Color(179, 179, 179, 255);
+    public static Color Gray80 = new Color(204, 204, 204, 255);
+    public static Color Gray90 = new Color(230, 230, 230, 255);
+}

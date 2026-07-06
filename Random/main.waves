@@ -1,0 +1,4 @@
+public int randInt(int min, int max)
+{
+    return extern("RandomInt", min, max);
+}
