@@ -1,0 +1,112 @@
+// Vec3: a 3D vector value type (Struct), with arithmetic and comparison operators.
+// Import with: import Math/Vec3;
+
+public Struct Vec3
+{
+    float x; float y; float z;
+
+    Vec3(float a, float b, float c) {
+        that.x = a; that.y = b; that.z = c;
+    }
+
+    func Vec3 operator+(Vec3 other) {
+        return new Vec3(that.x + other.x, that.y + other.y, that.z + other.z);
+    }
+
+    func Vec3 operator-(Vec3 other) {
+        return new Vec3(that.x - other.x, that.y - other.y, that.z - other.z);
+    }
+
+    func Vec3 operator*(float scalar) {
+        return new Vec3(that.x * scalar, that.y * scalar, that.z * scalar);
+    }
+
+    func Vec3 operator/(float scalar) {
+        return new Vec3(that.x / scalar, that.y / scalar, that.z / scalar);
+    }
+
+    func Vec3 operator-() {
+        return new Vec3(-that.x, -that.y, -that.z);
+    }
+
+    func bool operator==(Vec3 other) {
+        return that.x == other.x && that.y == other.y && that.z == other.z;
+    }
+
+    func bool operator!=(Vec3 other) {
+        return that.x != other.x || that.y != other.y || that.z != other.z;
+    }
+
+    func float dot(Vec3 other) {
+        return that.x * other.x + that.y * other.y + that.z * other.z;
+    }
+
+    // The vector perpendicular to both operands (right-handed).
+    func Vec3 cross(Vec3 other) {
+        return new Vec3(that.y * other.z - that.z * other.y,
+                        that.z * other.x - that.x * other.z,
+                        that.x * other.y - that.y * other.x);
+    }
+
+    func float lengthSquared() {
+        return that.dot(that);
+    }
+
+    func float length() {
+        return sqrt(that.lengthSquared());
+    }
+
+    // Returns the zero vector unchanged rather than dividing by zero.
+    func Vec3 normalized() {
+        float len = that.length();
+        if (len == 0.0) {
+            return new Vec3(0.0, 0.0, 0.0);
+        }
+        return new Vec3(that.x / len, that.y / len, that.z / len);
+    }
+
+    func float distance(Vec3 other) {
+        return (that - other).length();
+    }
+
+    func float distanceSquared(Vec3 other) {
+        return (that - other).lengthSquared();
+    }
+
+
+    // ── Componentwise ─────────────────────────────────────────────────────────
+    func Vec3 abs()      { return new Vec3(abs(x), abs(y), abs(z)); }
+    func Vec3 floor()    { return new Vec3(floor(x), floor(y), floor(z)); }
+    func Vec3 ceil()     { return new Vec3(ceil(x), ceil(y), ceil(z)); }
+    func Vec3 round()    { return new Vec3(round(x), round(y), round(z)); }
+    func Vec3 truncate() { return new Vec3(truncate(x), truncate(y), truncate(z)); }
+    func Vec3 sign()     { return new Vec3((x > 0.0 ? 1.0 : (x < 0.0 ? -1.0 : 0.0)), (y > 0.0 ? 1.0 : (y < 0.0 ? -1.0 : 0.0)), (z > 0.0 ? 1.0 : (z < 0.0 ? -1.0 : 0.0))); }
+    func Vec3 min(Vec3 other) { return new Vec3(min(x, other.x), min(y, other.y), min(z, other.z)); }
+    func Vec3 max(Vec3 other) { return new Vec3(max(x, other.x), max(y, other.y), max(z, other.z)); }
+    // Each component clamped to [lo, hi].
+    func Vec3 clamp(float lo, float hi) { return new Vec3(max(lo, min(hi, x)), max(lo, min(hi, y)), max(lo, min(hi, z))); }
+
+    // Unsigned angle between this vector and other, in radians (0 .. Pi). 0 when either is zero.
+    func float angleTo(Vec3 other) {
+        float denom = that.length() * other.length();
+        if (denom == 0.0) { return 0.0; }
+        return acos(max(-1.0, min(1.0, that.dot(other) / denom)));
+    }
+    static func Vec3 lerp(Vec3 a, Vec3 b, float t) {
+        return new Vec3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t);
+    }
+
+    static func Vec3 zero()    { return new Vec3(0, 0, 0); }
+    static func Vec3 one()     { return new Vec3(1, 1, 1); }
+    static func Vec3 up()      { return new Vec3(0, 1, 0); }
+    static func Vec3 down()    { return new Vec3(0, -1, 0); }
+    static func Vec3 right()   { return new Vec3(1, 0, 0); }
+    static func Vec3 left()    { return new Vec3(-1, 0, 0); }
+    static func Vec3 forward() { return new Vec3(0, 0, 1); }
+    static func Vec3 back()    { return new Vec3(0, 0, -1); }
+}
+
+public func Vec3 operator*(float scalar, Vec3 v)
+{
+    return new Vec3(v.x * scalar, v.y * scalar, v.z * scalar);
+}

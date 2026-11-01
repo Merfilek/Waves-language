@@ -1,0 +1,90 @@
+// Vec4: a 4D vector value type (Struct), with arithmetic and comparison operators.
+// Used for homogeneous coordinates and RGBA-style values.
+// Import with: import Math/Vec4;
+
+public Struct Vec4
+{
+    float x; float y; float z; float w;
+
+    Vec4(float a, float b, float c, float d) {
+        that.x = a; that.y = b; that.z = c; that.w = d;
+    }
+
+    func Vec4 operator+(Vec4 other) {
+        return new Vec4(that.x + other.x, that.y + other.y, that.z + other.z, that.w + other.w);
+    }
+
+    func Vec4 operator-(Vec4 other) {
+        return new Vec4(that.x - other.x, that.y - other.y, that.z - other.z, that.w - other.w);
+    }
+
+    func Vec4 operator*(float scalar) {
+        return new Vec4(that.x * scalar, that.y * scalar, that.z * scalar, that.w * scalar);
+    }
+
+    func Vec4 operator/(float scalar) {
+        return new Vec4(that.x / scalar, that.y / scalar, that.z / scalar, that.w / scalar);
+    }
+
+    func Vec4 operator-() {
+        return new Vec4(-that.x, -that.y, -that.z, -that.w);
+    }
+
+    func bool operator==(Vec4 other) {
+        return that.x == other.x && that.y == other.y && that.z == other.z && that.w == other.w;
+    }
+
+    func bool operator!=(Vec4 other) {
+        return that.x != other.x || that.y != other.y || that.z != other.z || that.w != other.w;
+    }
+
+    func float dot(Vec4 other) {
+        return that.x * other.x + that.y * other.y + that.z * other.z + that.w * other.w;
+    }
+
+    func float lengthSquared() {
+        return that.dot(that);
+    }
+
+    func float length() {
+        return sqrt(that.lengthSquared());
+    }
+
+    // Returns the zero vector unchanged rather than dividing by zero.
+    func Vec4 normalized() {
+        float len = that.length();
+        if (len == 0.0) {
+            return new Vec4(0.0, 0.0, 0.0, 0.0);
+        }
+        return new Vec4(that.x / len, that.y / len, that.z / len, that.w / len);
+    }
+
+    func float distance(Vec4 other) {
+        return (that - other).length();
+    }
+
+
+    // ── Componentwise ─────────────────────────────────────────────────────────
+    func Vec4 abs()      { return new Vec4(abs(x), abs(y), abs(z), abs(w)); }
+    func Vec4 floor()    { return new Vec4(floor(x), floor(y), floor(z), floor(w)); }
+    func Vec4 ceil()     { return new Vec4(ceil(x), ceil(y), ceil(z), ceil(w)); }
+    func Vec4 round()    { return new Vec4(round(x), round(y), round(z), round(w)); }
+    func Vec4 truncate() { return new Vec4(truncate(x), truncate(y), truncate(z), truncate(w)); }
+    func Vec4 sign()     { return new Vec4((x > 0.0 ? 1.0 : (x < 0.0 ? -1.0 : 0.0)), (y > 0.0 ? 1.0 : (y < 0.0 ? -1.0 : 0.0)), (z > 0.0 ? 1.0 : (z < 0.0 ? -1.0 : 0.0)), (w > 0.0 ? 1.0 : (w < 0.0 ? -1.0 : 0.0))); }
+    func Vec4 min(Vec4 other) { return new Vec4(min(x, other.x), min(y, other.y), min(z, other.z), min(w, other.w)); }
+    func Vec4 max(Vec4 other) { return new Vec4(max(x, other.x), max(y, other.y), max(z, other.z), max(w, other.w)); }
+    // Each component clamped to [lo, hi].
+    func Vec4 clamp(float lo, float hi) { return new Vec4(max(lo, min(hi, x)), max(lo, min(hi, y)), max(lo, min(hi, z)), max(lo, min(hi, w))); }
+    static func Vec4 lerp(Vec4 a, Vec4 b, float t) {
+        return new Vec4(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t,
+                        a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t);
+    }
+
+    static func Vec4 zero() { return new Vec4(0, 0, 0, 0); }
+    static func Vec4 one()  { return new Vec4(1, 1, 1, 1); }
+}
+
+public func Vec4 operator*(float scalar, Vec4 v)
+{
+    return new Vec4(v.x * scalar, v.y * scalar, v.z * scalar, v.w * scalar);
+}

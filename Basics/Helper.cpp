@@ -2,9 +2,15 @@
 
 #include <iostream>
 #include <string>
+#ifdef _WIN32
+#include <conio.h>
+#include <windows.h>
+#else
 #include <termios.h>
 #include <unistd.h>
+#endif
 
+#ifndef _WIN32
 static void setEcho(bool enabled)
 {
     termios tty;
@@ -17,6 +23,19 @@ static void setEcho(bool enabled)
 
     tcsetattr(STDIN_FILENO, TCSANOW, &tty);
 }
+#else
+static void setEcho(bool enabled)
+{
+    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD mode;
+    GetConsoleMode(h, &mode);
+    if (enabled)
+        mode |= ENABLE_ECHO_INPUT;
+    else
+        mode &= ~ENABLE_ECHO_INPUT;
+    SetConsoleMode(h, mode);
+}
+#endif
 
 extern "C" {
     WavesValue waves_Input(int argc, WavesValue* argv)
@@ -39,6 +58,7 @@ extern "C" {
         return waves_makeStringOwned(input.c_str());
     }
 
+#ifndef _WIN32
     WavesValue waves_Password_Input(int argc, WavesValue* argv)
     {
         std::string input;
@@ -74,4 +94,37 @@ extern "C" {
 
         return waves_makeStringOwned(input.c_str());
     }
+#else
+    // _getch() (conio.h) is the direct Windows Console equivalent of the Linux
+    // raw-mode getchar() loop above: reads one key immediately, no Enter needed,
+    // no echo -- same reason this function needs it instead of plain std::cin,
+    // same as the POSIX side needing termios instead of plain std::getline.
+    WavesValue waves_Password_Input(int argc, WavesValue* argv)
+    {
+        std::string input;
+
+        int ch;
+        while (true)
+        {
+            ch = _getch();
+
+            if (ch == '\n' || ch == '\r')
+                break;
+
+            if ((ch == 8 || ch == 127) && !input.empty())
+            {
+                input.pop_back();
+                std::cout << "\b \b" << std::flush;
+                continue;
+            }
+
+            input += (char)ch;
+            std::cout << '*' << std::flush;
+        }
+
+        std::cout << std::endl;
+
+        return waves_makeStringOwned(input.c_str());
+    }
+#endif
 }

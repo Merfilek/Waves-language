@@ -9,6 +9,8 @@ extern "C" {
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
 // ── Value Type Enum ───────────────────────────────────────────────────────────
 typedef enum {
@@ -118,10 +120,47 @@ static inline WavesValue waves_makeChar(char val) {
     return v;
 }
 
+// waves_makeString does NOT copy `val` — it just wraps the pointer you give it.
+// That pointer must stay valid until the VM has processed the return value (it
+// interns its own copy at that point, so nothing needs to stay valid after the
+// call into Waves returns). Safe to use directly for:
+//   - string literals ("like this")
+//   - a buffer you own and are intentionally leaking/transferring to the VM
+//     (e.g. malloc'd and never freed on your side)
+// NOT safe for a local std::string's .c_str() or any other buffer that gets
+// freed/destroyed as part of your own function returning — a std::string's
+// destructor runs as part of YOUR function's return sequence, before the VM
+// ever sees the value, so by the time it's read the pointer is already
+// dangling. Use waves_makeStringOwned() for those cases instead.
 static inline WavesValue waves_makeString(const char* val) {
     WavesValue v = {};
     v.type = WAVES_STRING;
     v.data.stringVal = val;
+    return v;
+}
+
+// Like waves_makeString, but takes its own heap copy (via strdup) first, so it's
+// always safe regardless of what happens to `val` after this call returns — the
+// one you need for `return waves_makeStringOwned(myString.c_str());` or any other
+// locally-built string. The copy is intentionally never freed on your side: the
+// VM interns its own copy when it reads the value, same trade-off Waves' own
+// string handling already makes everywhere else (see WaveCore's wc_intern) —
+// one small one-time allocation per call, not worth tracking down and freeing.
+static inline WavesValue waves_makeStringOwned(const char* val) {
+    WavesValue v = {};
+    v.type = WAVES_STRING;
+    if (val) {
+        // Plain malloc+memcpy rather than strdup: strdup is POSIX, not ISO C, so
+        // it isn't guaranteed to be declared under a strict -std=c11 build without
+        // the consuming file defining its own feature-test macros first — this
+        // avoids forcing that requirement on every file that includes this header.
+        size_t len = strlen(val);
+        char* copy = (char*)malloc(len + 1);
+        if (copy) memcpy(copy, val, len + 1);
+        v.data.stringVal = copy;
+    } else {
+        v.data.stringVal = NULL;
+    }
     return v;
 }
 
@@ -199,6 +238,31 @@ static inline const char* waves_getString(WavesValue v) {
     if (v.type == WAVES_STRING) return v.data.stringVal;
     if (v.type == WAVES_ERROR)  return v.data.errorMsg;
     return "";
+}
+
+// ── Equality ──────────────────────────────────────────────────────────────────
+// Value equality by type+content — the comparison any Dictionary/Set/cache-style
+// library needs for its keys. No two libraries should have to reimplement this;
+// promoted here after Generics' Helper.cpp had its own copy. Only meaningful for
+// scalar types (numbers, bool, char, string, null) — WAVES_ARRAY/WAVES_OBJECT
+// compare by handle identity (same array/object instance), not deep equality.
+static inline int waves_valuesEqual(WavesValue a, WavesValue b) {
+    if (a.type != b.type) return 0;
+    switch (a.type) {
+        case WAVES_NULL:   return 1;
+        case WAVES_INT:    return a.data.intVal    == b.data.intVal;
+        case WAVES_LONG:   return a.data.longVal   == b.data.longVal;
+        case WAVES_BOOL:   return a.data.boolVal   == b.data.boolVal;
+        case WAVES_DOUBLE: return a.data.doubleVal == b.data.doubleVal;
+        case WAVES_FLOAT:  return a.data.floatVal  == b.data.floatVal;
+        case WAVES_CHAR:   return a.data.charVal   == b.data.charVal;
+        case WAVES_STRING:
+            return a.data.stringVal && b.data.stringVal &&
+                   strcmp(a.data.stringVal, b.data.stringVal) == 0;
+        case WAVES_ARRAY:  return a.data.arrayVal  == b.data.arrayVal;
+        case WAVES_OBJECT: return a.data.objectVal == b.data.objectVal;
+        default: return 0;
+    }
 }
 
 // ── Type checking ─────────────────────────────────────────────────────────────

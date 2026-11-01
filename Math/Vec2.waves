@@ -1,0 +1,148 @@
+// Vec2: a 2D vector value type (Struct), with arithmetic and comparison operators.
+// Import with: import Math/Vec2;
+
+public Struct Vec2
+{
+    float x; float y;
+
+    Vec2(float a, float b) {
+        that.x = a; that.y = b;
+    }
+
+    // Arithmetic's
+    func Vec2 operator+(Vec2 other) {
+        return new Vec2(that.x + other.x, that.y + other.y);
+    }
+
+    func Vec2 operator-(Vec2 other) {
+        return new Vec2(that.x - other.x, that.y - other.y);
+    }
+
+    func Vec2 operator*(float scalar) {
+        return new Vec2(that.x * scalar, that.y * scalar);
+    }
+
+    func Vec2 operator/(float scalar) {
+        return new Vec2(that.x / scalar, that.y / scalar);
+    }
+
+    func Vec2 operator-() {
+        return new Vec2(-that.x, -that.y);
+    }
+
+    func bool operator==(Vec2 other) {
+        return that.x == other.x && that.y == other.y;
+    }
+
+    func bool operator!=(Vec2 other) {
+        return that.x != other.x || that.y != other.y;
+    }
+
+    func float length() {
+        return sqrt(that.x * that.x + that.y * that.y);
+    }
+
+    func float lengthSquared() {
+        return that.x * that.x + that.y * that.y;
+    }
+
+    func Vec2 normalized() {
+        float len = that.length();
+        return new Vec2(that.x / len, that.y / len);
+    }
+
+    func float dot(Vec2 other) {
+        return that.x * other.x + that.y * other.y;
+    }
+
+    // Utilities
+    func float distance(Vec2 other) {
+        return (that - other).length();
+    }
+
+    func float distanceSquared(Vec2 other) {
+        return (that - other).lengthSquared();
+    }
+
+    static func Vec2 lerp(Vec2 a, Vec2 b, float t)
+    {
+        return new Vec2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+    }
+
+
+    // ── Componentwise ─────────────────────────────────────────────────────────
+    func Vec2 abs()      { return new Vec2(abs(x), abs(y)); }
+    func Vec2 floor()    { return new Vec2(floor(x), floor(y)); }
+    func Vec2 ceil()     { return new Vec2(ceil(x), ceil(y)); }
+    func Vec2 round()    { return new Vec2(round(x), round(y)); }
+    func Vec2 truncate() { return new Vec2(truncate(x), truncate(y)); }
+    func Vec2 sign()     { return new Vec2((x > 0.0 ? 1.0 : (x < 0.0 ? -1.0 : 0.0)), (y > 0.0 ? 1.0 : (y < 0.0 ? -1.0 : 0.0))); }
+    func Vec2 min(Vec2 other) { return new Vec2(min(x, other.x), min(y, other.y)); }
+    func Vec2 max(Vec2 other) { return new Vec2(max(x, other.x), max(y, other.y)); }
+    // Each component clamped to [lo, hi].
+    func Vec2 clamp(float lo, float hi) { return new Vec2(max(lo, min(hi, x)), max(lo, min(hi, y))); }
+
+    // Unsigned angle between this vector and other, in radians (0 .. Pi). 0 when either is zero.
+    func float angleTo(Vec2 other) {
+        float denom = that.length() * other.length();
+        if (denom == 0.0) { return 0.0; }
+        return acos(max(-1.0, min(1.0, that.dot(other) / denom)));
+    }
+
+    // Signed angle from this vector to other, in radians: positive is counter-clockwise.
+    func float signedAngleTo(Vec2 other) {
+        return atan2(that.cross(other), that.dot(other));
+    }
+
+    // Polar angle of this vector, measured from the +x axis, in radians.
+    func float angle() {
+        return atan2(that.y, that.x);
+    }
+
+    // z of the 3D cross product of this and other (the area of their parallelogram, signed).
+    func float cross(Vec2 other) {
+        return that.x * other.y - that.y * other.x;
+    }
+
+    // This vector turned 90 degrees counter-clockwise.
+    func Vec2 perpendicular() {
+        return new Vec2(-that.y, that.x);
+    }
+
+    // This vector turned by an angle in radians, counter-clockwise.
+    func Vec2 rotate(float radians) {
+        float c = cos(radians);
+        float s = sin(radians);
+        return new Vec2(that.x * c - that.y * s, that.x * s + that.y * c);
+    }
+    //Orientations
+    static func Vec2 zero()
+    {
+        return new Vec2(0, 0);
+    }
+
+    static func Vec2 one()
+    {
+        return new Vec2(1, 1);
+    }
+
+    static func Vec2 up()
+    {
+        return new Vec2(0, 1);
+    }
+
+    static func Vec2 down()
+    {
+        return new Vec2(0, -1);
+    }
+
+    static func Vec2 left()
+    {
+        return new Vec2(-1, 0);
+    }
+
+    static func Vec2 right()
+    {
+        return new Vec2(1, 0);
+    }
+}

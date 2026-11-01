@@ -1,0 +1,93 @@
+// Scalar helpers: lerp, clamp, saturate, radians, degrees.
+// Import with: import Math/Utilities;
+
+// ── Scalar helpers ─────────────────────────────────────────────────────────
+
+public func float lerp(float a, float b, float t)
+{
+    return a + (b - a) * t;
+}
+
+public func float clamp(float v, float lo, float hi)
+{
+    if (v < lo) { return lo; }
+    if (v > hi) { return hi; }
+    return v;
+}
+
+public func float saturate(float v)
+{
+    return clamp(v, 0.0, 1.0);
+}
+
+public func float radians(float degrees)
+{
+    return degrees * 3.14159265358979 / 180.0;
+}
+
+public func float degrees(float radians)
+{
+    return radians * 180.0 / 3.14159265358979;
+}
+
+// Sign of v: -1, 0 or 1.
+public func float sign(float v)
+{
+    if (v < 0.0) { return -1.0; }
+    if (v > 0.0) { return 1.0; }
+    return 0.0;
+}
+
+// True when a and b differ by less than eps (default 0.00001).
+public func bool approximately(float a, float b, #float eps)
+{
+    float tolerance = eps.IsInputted() ? eps : 0.00001;
+    return abs(a - b) < tolerance;
+}
+
+// Position of v between a and b, as 0..1 (the inverse of lerp).
+public func float inverseLerp(float a, float b, float v)
+{
+    if (a == b) { return 0.0; }
+    return (v - a) / (b - a);
+}
+
+// Maps v from the range [inLo, inHi] to the range [outLo, outHi].
+public func float remap(float v, float inLo, float inHi, float outLo, float outHi)
+{
+    return lerp(outLo, outHi, inverseLerp(inLo, inHi, v));
+}
+
+// Hermite smooth step from 0 to 1 as t goes from edge0 to edge1.
+public func float smoothstep(float edge0, float edge1, float x)
+{
+    float t = saturate((x - edge0) / (edge1 - edge0));
+    return t * t * (3.0 - 2.0 * t);
+}
+
+// Moves current toward target by at most maxDelta, without overshooting.
+public func float moveTowards(float current, float target, float maxDelta)
+{
+    if (abs(target - current) <= maxDelta) { return target; }
+    return current + sign(target - current) * maxDelta;
+}
+
+// Euclidean remainder: always in [0, m) for m > 0 (unlike %, which keeps the sign of a).
+public func float wrap(float a, float m)
+{
+    float r = a - m * floor(a / m);
+    return r;
+}
+
+// An angle in degrees wrapped into [-180, 180).
+public func float wrapAngle(float degrees)
+{
+    return wrap(degrees + 180.0, 360.0) - 180.0;
+}
+
+// Interpolates between two angles in degrees along the shortest way round.
+public func float lerpAngle(float a, float b, float t)
+{
+    float diff = wrapAngle(b - a);
+    return wrapAngle(a + diff * t);
+}
